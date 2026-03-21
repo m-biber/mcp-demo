@@ -21,7 +21,7 @@ from google.adk.apps import App
 from google.adk.models import Gemini
 from google.genai import types
 
-from .tools import get_maps_mcp_toolset, get_bigquery_mcp_toolset
+from .tools import get_maps_mcp_toolset, get_data_agent_toolset
 
 import os
 import google.auth
@@ -35,8 +35,8 @@ print(f"PROJECT ID: {project_id}")
 
 # Load Tools
 maps_toolset = get_maps_mcp_toolset()
-bigquery_toolset = get_bigquery_mcp_toolset(project_id)
-
+data_agent_toolset = get_data_agent_toolset()
+BAKERY_AGENT_NAME = f"projects/{project_id}/locations/global/dataAgents/agent_0219a080-66d2-47b6-905a-40a894d50d50"
 
 root_agent = Agent(
     name="root_agent",
@@ -45,21 +45,15 @@ root_agent = Agent(
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction=f"""
-                Help the user answer questions by strategically combining insights from two sources:
+                Help the user answer questions by strategically combining insights from two sources.
                 
-                1.  **BigQuery toolset:** Access demographic (inc. foot traffic index), product pricing, and historical sales data in the  mcp_bakery dataset. Do not use any other dataset.
-                Run all query jobs from project id: {project_id}.
+                1.  **Data Agent Toolset:** You have access to a conversational Data Agent that understands the mcp_bakery dataset (demographics, foot traffic, product pricing, and historical sales). 
+                    - Use the `ask_data_agent` tool to query it using natural language. 
+                    - CRITICAL: You MUST always pass exactly `{BAKERY_AGENT_NAME}` as the data agent name/resource parameter. Do not attempt to guess or use any other value.
 
                 2.  **Maps Toolset:** Use this for real-world location analysis, finding competition/places and calculating necessary travel routes.
                     Include a hyperlink to an interactive map in your response where appropriate.
-            """,
-    tools=[maps_toolset, bigquery_toolset]
-
-    # instruction=f"""
-    #             Help the user answer questions about any Google Cloud product or service. 
-    #             Use the dev_knowledge_toolset to find the answer.
-    #         """,
-    # tools=[dev_knowledge_toolset]
+            """,    tools=[maps_toolset, data_agent_toolset]
 )
 
 app = App(

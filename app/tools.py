@@ -1,14 +1,15 @@
 import os
 import dotenv
 import google.auth
-from google.adk.tools.api_registry import ApiRegistry
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 
-MAPS_MCP_URL = "https://mapstools.googleapis.com/mcp"
-# DEVELOPER_KNOWLEDGE_MCP_URL = "https://developerknowledge.googleapis.com/mcp"
-# BIGQUERY_MCP_URL = "https://bigquery.googleapis.com/mcp"
+from google.adk.tools.data_agent.config import DataAgentToolConfig
+from google.adk.tools.data_agent.credentials import DataAgentCredentialsConfig
+from google.adk.tools.data_agent.data_agent_toolset import DataAgentToolset
 
+
+MAPS_MCP_URL = "https://mapstools.googleapis.com/mcp"
 
 def get_maps_mcp_toolset():
     dotenv.load_dotenv()
@@ -29,43 +30,32 @@ def get_maps_mcp_toolset():
     print("MCP Toolset configured for Streamable HTTP connection.")
     return tools
 
-
-def get_bigquery_mcp_toolset(project_id: str):
-
-    MCP_SERVER_NAME = f"projects/{project_id}/locations/global/mcpServers/google-bigquery.googleapis.com-mcp"
-
-    # Let ApiRegistry dynamically evaluate headers per-request
-    def header_provider(context):
-        return {"x-goog-user-project": project_id}
-
-    api_registry = ApiRegistry(
-        api_registry_project_id=project_id,
-        header_provider=header_provider
-    )
-    registry_tools = api_registry.get_toolset(
-        mcp_server_name=MCP_SERVER_NAME
+def get_data_agent_toolset():
+    """
+    Configures the toolset to interact with pre-configured 
+    Conversational Analytics DataAgents.
+    """
+    # Define tool configuration
+    tool_config = DataAgentToolConfig(
+        max_query_result_rows=100,
     )
 
-    print("MCP Toolset configured for Streamable HTTP connection.")
-    return registry_tools
+    # Use Application Default Credentials (ADC)
+    application_default_credentials, _ = google.auth.default()
+    credentials_config = DataAgentCredentialsConfig(
+        credentials=application_default_credentials
+    )
 
-# def get_dev_knowledge_mcp_toolset():
-#     """
-#     Configures the MCP Toolset for searching and retrieving 
-#     official Google Developer documentation.
-#     """
-#     dotenv.load_dotenv()
-#     dev_api_key = os.getenv('DEVELOPER_KNOWLEDGE_API_KEY', 'no_api_found')
-#     if not dev_api_key:
-#         dev_api_key = get_secret('DEVELOPER_KNOWLEDGE_API_KEY')
-
-#     tools = MCPToolset(
-#         connection_params=StreamableHTTPConnectionParams(
-#             url=DEVELOPER_KNOWLEDGE_MCP_URL,
-#             headers={    
-#                 "X-Goog-Api-Key": dev_api_key
-#             }
-#         )
-#     )
-#     print("MCP Toolset configured for Developer Knowledge (Docs).")
-#     return tools
+    # Instantiate a Data Agent toolset
+    da_toolset = DataAgentToolset(
+        credentials_config=credentials_config,
+        data_agent_tool_config=tool_config,
+        tool_filter=[
+            # "list_accessible_data_agents",
+            # "get_data_agent_info",
+            "ask_data_agent",
+        ],
+    )
+    
+    print("DataAgentToolset configured successfully.")
+    return da_toolset
