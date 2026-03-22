@@ -41,7 +41,14 @@ def get_data_agent_toolset():
     )
 
     # Use Application Default Credentials (ADC)
-    application_default_credentials, _ = google.auth.default()
+    application_default_credentials, _ = google.auth.default(
+        scopes=["https://www.googleapis.com/auth/cloud-platform"])
+
+    # Ensure the credentials are refreshed to pick up the scope
+    if not application_default_credentials.valid:
+        auth_request = google.auth.transport.requests.Request()
+        application_default_credentials.refresh(auth_request)
+
     credentials_config = DataAgentCredentialsConfig(
         credentials=application_default_credentials
     )
