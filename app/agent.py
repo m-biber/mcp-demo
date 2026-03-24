@@ -21,8 +21,6 @@ from google.adk.apps import App
 from google.adk.models import Gemini
 from google.genai import types
 
-from .tools import get_maps_mcp_toolset, get_bigquery_mcp_toolset
-
 import os
 import google.auth
 
@@ -31,11 +29,11 @@ os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
-print(f"PROJECT ID: {project_id}")
+from .tools import get_maps_mcp_toolset, get_bigquery_mcp_toolset
 
 # Load Tools
 maps_toolset = get_maps_mcp_toolset()
-bigquery_toolset = get_bigquery_mcp_toolset(project_id)
+bigquery_toolset = get_bigquery_mcp_toolset()
 
 
 root_agent = Agent(
@@ -54,12 +52,6 @@ root_agent = Agent(
                     Include a hyperlink to an interactive map in your response where appropriate.
             """,
     tools=[maps_toolset, bigquery_toolset]
-
-    # instruction=f"""
-    #             Help the user answer questions about any Google Cloud product or service. 
-    #             Use the dev_knowledge_toolset to find the answer.
-    #         """,
-    # tools=[dev_knowledge_toolset]
 )
 
 app = App(

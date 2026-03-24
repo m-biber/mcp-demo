@@ -33,6 +33,7 @@ deploy:
 	# Export dependencies to requirements file using uv export.
 	(uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > app/app_utils/.requirements.txt 2>/dev/null || \
 	uv export --no-hashes --no-header --no-dev --no-emit-project > app/app_utils/.requirements.txt) && \
+	grep -v "^litellm==" app/app_utils/.requirements.txt > app/app_utils/.requirements.tmp && mv app/app_utils/.requirements.tmp app/app_utils/.requirements.txt && \
 	uv run -m app.app_utils.deploy \
 		--source-packages=./app \
 		--entrypoint-module=app.agent_engine_app \

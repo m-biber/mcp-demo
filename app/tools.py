@@ -5,49 +5,59 @@ from google.adk.tools.api_registry import ApiRegistry
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 
-MAPS_MCP_URL = "https://mapstools.googleapis.com/mcp"
-# DEVELOPER_KNOWLEDGE_MCP_URL = "https://developerknowledge.googleapis.com/mcp"
-# BIGQUERY_MCP_URL = "https://bigquery.googleapis.com/mcp"
+dotenv.load_dotenv()
 
+# Configure with your Google Cloud Project ID and registered MCP server name
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+MAPS_API_KEY = os.getenv('MAPS_API_KEY')
+
+# Managed MCP Server Endpoints
+BQ_MCP_SERVER = f"projects/{PROJECT_ID}/locations/global/mcpServers/google-bigquery.googleapis.com-mcp"
+MAPS_MCP_URL = "https://mapstools.googleapis.com/mcp"
+
+# TODO: change MAPS MCP with below endpoint. Figure out handling API Key
+# MAPS_MCP_SERVER = f"projects/{PROJECT_ID}/locations/global/mcpServers/google-mapstools.googleapis.com-mcp"
+# DEVELOPER_KNOWLEDGE_MCP_URL = "https://developerknowledge.googleapis.com/mcp"
 
 def get_maps_mcp_toolset():
-    dotenv.load_dotenv()
+    """
+    Configures and returns the MCP Toolset for Google Maps.
     
-    # Get the MAPS API Key via the secret manager
-    maps_api_key = os.getenv('MAPS_API_KEY')
-    if not maps_api_key:
-        print("Warning: MAPS_API_KEY environment variable is missing!")
-
+    This establishes a streamable HTTP connection to the Maps MCP server
+    using the configured MAPS_API_KEY.
+    """
     tools = MCPToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=MAPS_MCP_URL,
             headers={    
-                "X-Goog-Api-Key": maps_api_key
+                "X-Goog-Api-Key": MAPS_API_KEY
             }
         )
     )
     print("MCP Toolset configured for Streamable HTTP connection.")
     return tools
 
+def get_bigquery_mcp_toolset():
+    """
+    Configures and returns the MCP Toolset for Google BigQuery.
 
-def get_bigquery_mcp_toolset(project_id: str):
-
-    MCP_SERVER_NAME = f"projects/{project_id}/locations/global/mcpServers/google-bigquery.googleapis.com-mcp"
-
+    This uses the ApiRegistry to manage authentication and connection
+    to the BigQuery MCP server using the configured PROJECT_ID.
+    """
     # Let ApiRegistry dynamically evaluate headers per-request
     def header_provider(context):
-        return {"x-goog-user-project": project_id}
+        return {"x-goog-user-project": PROJECT_ID}
 
     api_registry = ApiRegistry(
-        api_registry_project_id=project_id,
+        api_registry_project_id=PROJECT_ID,
         header_provider=header_provider
     )
-    registry_tools = api_registry.get_toolset(
-        mcp_server_name=MCP_SERVER_NAME
+    tools = api_registry.get_toolset(
+        mcp_server_name=BQ_MCP_SERVER
     )
 
     print("MCP Toolset configured for Streamable HTTP connection.")
-    return registry_tools
+    return tools
 
 # def get_dev_knowledge_mcp_toolset():
 #     """
