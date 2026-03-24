@@ -8,22 +8,26 @@ from google.adk.tools.data_agent.config import DataAgentToolConfig
 from google.adk.tools.data_agent.credentials import DataAgentCredentialsConfig
 from google.adk.tools.data_agent.data_agent_toolset import DataAgentToolset
 
+dotenv.load_dotenv()
+
+# Configure with your Google Cloud Project ID and registered MCP server name
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
+MAPS_API_KEY = os.getenv('MAPS_API_KEY')
 
 MAPS_MCP_URL = "https://mapstools.googleapis.com/mcp"
 
 def get_maps_mcp_toolset():
-    dotenv.load_dotenv()
+    """
+    Configures and returns the MCP Toolset for Google Maps.
     
-    # Get the MAPS API Key via the secret manager
-    maps_api_key = os.getenv('MAPS_API_KEY')
-    if not maps_api_key:
-        print("Warning: MAPS_API_KEY environment variable is missing!")
-
+    This establishes a streamable HTTP connection to the Maps MCP server
+    using the configured MAPS_API_KEY.
+    """
     tools = MCPToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=MAPS_MCP_URL,
             headers={    
-                "X-Goog-Api-Key": maps_api_key
+                "X-Goog-Api-Key": MAPS_API_KEY
             }
         )
     )
@@ -58,8 +62,8 @@ def get_data_agent_toolset():
         credentials_config=credentials_config,
         data_agent_tool_config=tool_config,
         tool_filter=[
-            # "list_accessible_data_agents",
-            # "get_data_agent_info",
+            "list_accessible_data_agents",
+            "get_data_agent_info",
             "ask_data_agent",
         ],
     )
